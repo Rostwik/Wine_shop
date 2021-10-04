@@ -1,55 +1,50 @@
 import argparse
 import datetime
-import os
 from collections import defaultdict
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 
 import pandas
-from dotenv import load_dotenv
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 
 def main():
-    load_dotenv()
-    path = os.getenv("PATH_FILE")
-
     parser = argparse.ArgumentParser()
     parser.add_argument(
         '-p',
         '--path',
         help='Путь до файла',
-        default=path,
+        default='wine.xlsx',
         type=str
     )
-    parser.parse_args()
+    args = parser.parse_args()
 
     env = Environment(
         loader=FileSystemLoader('.'),
         autoescape=select_autoescape(['html', 'xml'])
     )
 
-    foundation_date = 1920
-    company_years = datetime.date.today().year - foundation_date
+    year_of_establishment_of_winery = 1920
+    winery_age = datetime.date.today().year - year_of_establishment_of_winery
 
     template_page = env.get_template('template.html')
 
     wines = pandas.read_excel(
-        path, sheet_name='Лист1',
+        args.path, sheet_name='Лист1',
         dtype={'Цена': int},
         na_values=['N/A', 'NA'],
         keep_default_na=False
     ).to_dict(orient='records')
 
-    template_data = defaultdict(list)
+    wines_sorted_by_category = defaultdict(list)
 
     for wine in wines:
-        template_data[wine['Категория']].append(
+        wines_sorted_by_category[wine['Категория']].append(
             {key: item for key, item in wine.items() if key != 'Категория'}
         )
 
     rendered_page = template_page.render(
-        company_years=company_years,
-        wines=template_data
+        company_years=winery_age,
+        wines=wines_sorted_by_category
     )
 
     with open('index.html', 'w', encoding="utf8") as file:
