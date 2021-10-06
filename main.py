@@ -22,10 +22,6 @@ def main():
         loader=FileSystemLoader('.'),
         autoescape=select_autoescape(['html', 'xml'])
     )
-
-    year_of_establishment_of_winery = 1920
-    winery_age = datetime.date.today().year - year_of_establishment_of_winery
-
     template_page = env.get_template('template.html')
     wines = pandas.read_excel(
         args.path, sheet_name='Лист1',
@@ -33,6 +29,9 @@ def main():
         na_values=['N/A', 'NA'],
         keep_default_na=False
     ).to_dict(orient='records')
+
+    year_of_establishment_of_winery = 1920
+    winery_age = datetime.date.today().year - year_of_establishment_of_winery
     wines_sorted_by_category = defaultdict(list)
     for wine in wines:
         wines_sorted_by_category[wine['Категория']].append(
@@ -42,6 +41,7 @@ def main():
         winery_age=winery_age,
         wines=wines_sorted_by_category
     )
+
     with open('index.html', 'w', encoding="utf8") as file:
         file.write(rendered_page)
 
